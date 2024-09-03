@@ -98,14 +98,14 @@
                     abstractCountdownElem.innerHTML = `<span class="countdown">${abstractDaysLeft} days left</span>`;
                 } else {
                     abstractDateElem.classList.add('expired');
-                    abstractCountdownElem.innerHTML = '<span class="countdown">Expired</span>';
+                    abstractCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
                 }
 
                 if (paperDaysLeft > 0) {
                     paperCountdownElem.innerHTML = `<span class="countdown">${paperDaysLeft} days left</span>`;
                 } else {
                     paperDateElem.classList.add('expired');
-                    paperCountdownElem.innerHTML = '<span class="countdown">Expired</span>';
+                    paperCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
                 }
 
                 if (abstractDaysLeft <= 0 && paperDaysLeft <= 0) {
