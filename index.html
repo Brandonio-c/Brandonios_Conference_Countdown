@@ -88,4 +88,33 @@
                 const paperCountdownElem = row.querySelector('.paper-countdown');
                 
                 const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
-                cons
+                const paperDate = new Date(paperDateElem.getAttribute('data-date'));
+                const now = new Date();
+
+                const abstractDaysLeft = Math.ceil((abstractDate - now) / (1000 * 60 * 60 * 24));
+                const paperDaysLeft = Math.ceil((paperDate - now) / (1000 * 60 * 60 * 24));
+
+                if (abstractDaysLeft > 0) {
+                    abstractCountdownElem.innerHTML = `<span class="countdown">${abstractDaysLeft} days left</span>`;
+                } else {
+                    abstractDateElem.classList.add('expired');
+                    abstractCountdownElem.innerHTML = '<span class="countdown">Expired</span>';
+                }
+
+                if (paperDaysLeft > 0) {
+                    paperCountdownElem.innerHTML = `<span class="countdown">${paperDaysLeft} days left</span>`;
+                } else {
+                    paperDateElem.classList.add('expired');
+                    paperCountdownElem.innerHTML = '<span class="countdown">Expired</span>';
+                }
+
+                if (abstractDaysLeft <= 0 && paperDaysLeft <= 0) {
+                    row.classList.add('expired-row');
+                }
+            });
+        }
+
+        updateCountdown();
+    </script>
+</body>
+</html>
