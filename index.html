@@ -31,11 +31,16 @@
         }
         .countdown {
             font-weight: bold;
-            color: red;
+            color: green;
         }
         .expired {
-            color: gray;
+            color: red;
             text-decoration: line-through;
+        }
+        .expired-row {
+            color: red;
+            text-decoration: line-through;
+            background-color: #ffe6e6;
         }
     </style>
 </head>
@@ -47,21 +52,27 @@
                 <th>Conference / Symposia Name</th>
                 <th>Location</th>
                 <th>Abstract Submission Date</th>
+                <th>Countdown to Abstract Submission</th>
                 <th>Paper Submission Date</th>
+                <th>Countdown to Paper Submission</th>
             </tr>
         </thead>
         <tbody>
             <tr>
                 <td><a href="https://aaai.org/conference/aaai/aaai-25/">AAAI-25 Fall Symposium Series</a></td>
                 <td>Washington, D.C., USA</td>
-                <td class="date" data-date="2024-08-07">August 7, 2024</td>
-                <td class="date" data-date="2024-08-15">August 15, 2024</td>
+                <td class="abstract-date" data-date="2024-08-07">August 7, 2024</td>
+                <td class="abstract-countdown"></td>
+                <td class="paper-date" data-date="2024-08-15">August 15, 2024</td>
+                <td class="paper-countdown"></td>
             </tr>
             <tr>
                 <td><a href="https://eaai-conf.github.io/year/eaai-25.html">EAAI-25 (Educational Advances in AI)</a></td>
                 <td>Philadelphia, Pennsylvania, USA</td>
-                <td class="date" data-date="2024-09-09">September 9, 2024</td>
-                <td class="date" data-date="2024-09-16">September 16, 2024</td>
+                <td class="abstract-date" data-date="2024-09-09">September 9, 2024</td>
+                <td class="abstract-countdown"></td>
+                <td class="paper-date" data-date="2024-09-16">September 16, 2024</td>
+                <td class="paper-countdown"></td>
             </tr>
             <!-- Add more rows as needed -->
         </tbody>
@@ -69,13 +80,12 @@
 
     <script>
         function updateCountdown() {
-            const rows = document.querySelectorAll('.date');
+            const rows = document.querySelectorAll('tbody tr');
             rows.forEach(row => {
-                const date = new Date(row.getAttribute('data-date'));
-                const now = new Date();
-                const timeDifference = date - now;
-                const daysLeft = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
-
-                if (daysLeft > 0) {
-                    row.innerHTML += ` (<span class="countdown">${daysLeft} days left</span>)`;
-             
+                const abstractDateElem = row.querySelector('.abstract-date');
+                const paperDateElem = row.querySelector('.paper-date');
+                const abstractCountdownElem = row.querySelector('.abstract-countdown');
+                const paperCountdownElem = row.querySelector('.paper-countdown');
+                
+                const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
+                cons
