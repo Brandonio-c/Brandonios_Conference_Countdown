@@ -113,23 +113,6 @@
             errorMessageDiv.style.display = 'block'; // Show the error message on the page
         }
 
-        function formatCountdown(milliseconds) {
-            if (milliseconds < 0) return "Expired"; // Date has passed
-
-            let seconds = Math.floor(milliseconds / 1000);
-            let minutes = Math.floor(seconds / 60);
-            let hours = Math.floor(minutes / 60);
-            let days = Math.floor(hours / 24);
-            let years = Math.floor(days / 365);
-
-            days %= 365;
-            hours %= 24;
-            minutes %= 60;
-            seconds %= 60;
-
-            return `${years}y:${days}d:${hours}h:${minutes}m:${seconds}s`;
-        }
-
         // Fetch the Excel file from the repository
         fetch('./conferences_information.xlsx')
             .then(response => {
@@ -164,11 +147,11 @@
                             <td>${conference['Conference / Symposia Name']}</td>
                             <td><a href="${conference['Website']}">${conference['Website']}</a></td>
                             <td>${conference['Location']}</td>
-                            <td class="abstract-date" data-date="${abstractDate}">${abstractDate}</td>
+                            <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
                             <td class="abstract-countdown"></td>
-                            <td class="paper-date" data-date="${paperDate}">${paperDate}</td>
+                            <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
                             <td class="paper-countdown"></td>
-                            <td class="conference-date" data-date="${conferenceDate}">${conferenceDate}</td>
+                            <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
                             <td class="conference-countdown"></td>
                             <td>${conference['Research Area(s)']}</td>
                         `;
@@ -192,33 +175,38 @@
                 const paperCountdownElem = row.querySelector('.paper-countdown');
                 const conferenceCountdownElem = row.querySelector('.conference-countdown');
                 
+                const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
+                const paperDate = new Date(paperDateElem.getAttribute('data-date'));
+                const conferenceDate = new Date(conferenceDateElem.getAttribute('data-date'));
                 const now = new Date();
 
-                try {
-                    const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
-                    if (isNaN(abstractDate.getTime())) throw new Error('Invalid Date');
-                    const abstractMillisecondsLeft = abstractDate - now;
-                    abstractCountdownElem.textContent = formatCountdown(abstractMillisecondsLeft);
-                } catch {
-                    abstractCountdownElem.textContent = "N/A";
+                const abstractDaysLeft = Math.ceil((abstractDate - now) / (1000 * 60 * 60 * 24));
+                const paperDaysLeft = Math.ceil((paperDate - now) / (1000 * 60 * 60 * 24));
+                const conferenceDaysLeft = Math.ceil((conferenceDate - now) / (1000 * 60 * 60 * 24));
+
+                if (abstractDaysLeft > 0) {
+                    abstractCountdownElem.innerHTML = `<span class="countdown">${abstractDaysLeft} days left</span>`;
+                } else {
+                    abstractDateElem.classList.add('expired');
+                    abstractCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
                 }
 
-                try {
-                    const paperDate = new Date(paperDateElem.getAttribute('data-date'));
-                    if (isNaN(paperDate.getTime())) throw new Error('Invalid Date');
-                    const paperMillisecondsLeft = paperDate - now;
-                    paperCountdownElem.textContent = formatCountdown(paperMillisecondsLeft);
-                } catch {
-                    paperCountdownElem.textContent = "N/A";
+                if (paperDaysLeft > 0) {
+                    paperCountdownElem.innerHTML = `<span class="countdown">${paperDaysLeft} days left</span>`;
+                } else {
+                    paperDateElem.classList.add('expired');
+                    paperCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
                 }
 
-                try {
-                    const conferenceDate = new Date(conferenceDateElem.getAttribute('data-date'));
-                    if (isNaN(conferenceDate.getTime())) throw new Error('Invalid Date');
-                    const conferenceMillisecondsLeft = conferenceDate - now;
-                    conferenceCountdownElem.textContent = formatCountdown(conferenceMillisecondsLeft);
-                } catch {
-                    conferenceCountdownElem.textContent = "N/A";
+                if (conferenceDaysLeft > 0) {
+                    conferenceCountdownElem.innerHTML = `<span class="countdown">${conferenceDaysLeft} days left</span>`;
+                } else {
+                    conferenceDateElem.classList.add('expired');
+                    conferenceCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
+                }
+
+                if (abstractDaysLeft <= 0 && paperDaysLeft <= 0 && conferenceDaysLeft <= 0) {
+                    row.classList.add('expired-row');
                 }
             });
         }
