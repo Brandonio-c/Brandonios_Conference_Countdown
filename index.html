@@ -15,6 +15,10 @@
         h1 {
             text-align: center;
         }
+        #error-message {
+            color: red;
+            font-weight: bold;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
@@ -47,6 +51,8 @@
 </head>
 <body>
     <h1>Upcoming Conferences / Symposia Countdown</h1>
+
+    <div id="error-message"></div> <!-- This is where error messages will appear -->
     
     <table id="conferenceTable">
         <thead>
@@ -69,6 +75,13 @@
     </table>
 
     <script>
+        const errorMessageDiv = document.getElementById('error-message');
+
+        function displayError(message) {
+            errorMessageDiv.textContent = message;
+            errorMessageDiv.style.display = 'block'; // Show the error message on the page
+        }
+
         // Fetch the Excel file from the repository
         fetch('./conferences_information.xlsx')
             .then(response => {
@@ -78,42 +91,48 @@
                 return response.arrayBuffer();
             })
             .then(data => {
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet);
+                try {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet);
 
-                console.log(json);  // Check if the JSON is correct
+                    if (!json || json.length === 0) {
+                        throw new Error('Excel file is empty or incorrectly formatted.');
+                    }
 
-                const tbody = document.querySelector('#conferenceTable tbody');
-                tbody.innerHTML = ''; // Clear the table body before appending
+                    const tbody = document.querySelector('#conferenceTable tbody');
+                    tbody.innerHTML = ''; // Clear the table body before appending
 
-                // Loop through the data and create rows
-                json.forEach(conference => {
-                    const row = document.createElement('tr');
+                    // Loop through the data and create rows
+                    json.forEach(conference => {
+                        const row = document.createElement('tr');
 
-                    const abstractDate = conference['Abstract Submission Date'];
-                    const paperDate = conference['Paper Submission Date'];
-                    const conferenceDate = conference['Conference Date'];
+                        const abstractDate = conference['Abstract Submission Date'];
+                        const paperDate = conference['Paper Submission Date'];
+                        const conferenceDate = conference['Conference Date'];
 
-                    row.innerHTML = `
-                        <td>${conference['Conference / Symposia Name']}</td>
-                        <td><a href="${conference['Website']}">${conference['Website']}</a></td>
-                        <td>${conference['Location']}</td>
-                        <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
-                        <td class="abstract-countdown"></td>
-                        <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
-                        <td class="paper-countdown"></td>
-                        <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
-                        <td class="conference-countdown"></td>
-                        <td>${conference['Research Area(s)']}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                        row.innerHTML = `
+                            <td>${conference['Conference / Symposia Name']}</td>
+                            <td><a href="${conference['Website']}">${conference['Website']}</a></td>
+                            <td>${conference['Location']}</td>
+                            <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
+                            <td class="abstract-countdown"></td>
+                            <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
+                            <td class="paper-countdown"></td>
+                            <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
+                            <td class="conference-countdown"></td>
+                            <td>${conference['Research Area(s)']}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
 
-                updateCountdown(); // Apply countdown logic to the newly added rows
+                    updateCountdown(); // Apply countdown logic to the newly added rows
+                } catch (error) {
+                    displayError('Error parsing the Excel file: ' + error.message);
+                }
             })
-            .catch(error => console.error('Error fetching the Excel file:', error));
+            .catch(error => displayError(error.message));
 
         function updateCountdown() {
             const rows = document.querySelectorAll('tbody tr');
