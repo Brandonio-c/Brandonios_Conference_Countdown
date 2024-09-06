@@ -47,6 +47,27 @@
             text-decoration: line-through;
             background-color: #ffe6e6;
         }
+        /* Toggle button and list styles */
+        #researchAcronymsToggle {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #researchAcronymsList {
+            display: none; /* Hidden by default */
+            margin-top: 20px;
+        }
+        #researchAcronymsList ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #researchAcronymsList ul li {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
@@ -73,6 +94,16 @@
             <!-- Rows will be added dynamically here -->
         </tbody>
     </table>
+
+    <!-- Toggle button to show/hide the research acronyms list -->
+    <button id="researchAcronymsToggle">Show Research Area Acronyms</button>
+
+    <!-- Hidden list that shows after clicking the toggle button -->
+    <div id="researchAcronymsList">
+        <ul id="acronymsList">
+            <!-- Research acronyms will be added here dynamically -->
+        </ul>
+    </div>
 
     <script>
         const errorMessageDiv = document.getElementById('error-message');
@@ -179,6 +210,38 @@
                 }
             });
         }
+
+        // Toggle research area acronyms list
+        document.getElementById('researchAcronymsToggle').addEventListener('click', function() {
+            const researchAcronymsList = document.getElementById('researchAcronymsList');
+            const isVisible = researchAcronymsList.style.display === 'block';
+            researchAcronymsList.style.display = isVisible ? 'none' : 'block';
+            this.textContent = isVisible ? 'Show Research Area Acronyms' : 'Hide Research Area Acronyms';
+        });
+
+        // Fetch and display the research acronyms from the Excel file
+        fetch('./research_acronyms.xlsx')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error fetching the research acronyms Excel file: ' + response.statusText);
+                }
+                return response.arrayBuffer();
+            })
+            .then(data => {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                const ul = document.getElementById('acronymsList');
+                json.forEach(entry => {
+                    const li = document.createElement('li');
+                    li.textContent = `${entry.Acronym}: ${entry['Research Area']}`;
+                    ul.appendChild(li);
+                });
+            })
+            .catch(error => displayError('Error fetching or parsing research acronyms: ' + error.message));
+
     </script>
 </body>
 </html>
