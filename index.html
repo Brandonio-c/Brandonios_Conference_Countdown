@@ -47,8 +47,7 @@
 </head>
 <body>
     <h1>Upcoming Conferences / Symposia Countdown</h1>
-
-    <input type="file" id="fileInput" accept=".xlsx" />
+    
     <table id="conferenceTable">
         <thead>
             <tr>
@@ -67,6 +66,41 @@
     </table>
 
     <script>
+        // Fetch the Excel file from the repository
+        fetch('conferences_information.xlsx')
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(worksheet);
+
+                const tbody = document.querySelector('#conferenceTable tbody');
+                tbody.innerHTML = ''; // Clear the table body before appending
+
+                // Loop through the data and create rows
+                json.forEach(conference => {
+                    const row = document.createElement('tr');
+
+                    const abstractDate = conference['Abstract Submission Date'];
+                    const paperDate = conference['Paper Submission Date'];
+
+                    row.innerHTML = `
+                        <td>${conference['Conference / Symposia Name']}</td>
+                        <td><a href="${conference['Website']}">${conference['Website']}</a></td>
+                        <td>${conference['Location']}</td>
+                        <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
+                        <td class="abstract-countdown"></td>
+                        <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
+                        <td class="paper-countdown"></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                updateCountdown(); // Apply countdown logic to the newly added rows
+            })
+            .catch(error => console.error('Error fetching the Excel file:', error));
+
         function updateCountdown() {
             const rows = document.querySelectorAll('tbody tr');
             rows.forEach(row => {
@@ -101,46 +135,6 @@
                 }
             });
         }
-
-        // Function to load and parse Excel file
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(event) {
-                const data = new Uint8Array(event.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet);
-
-                const tbody = document.querySelector('#conferenceTable tbody');
-                tbody.innerHTML = ''; // Clear the table body before appending
-
-                // Loop through the data and create rows
-                json.forEach(conference => {
-                    const row = document.createElement('tr');
-
-                    const abstractDate = conference['Abstract Submission Date'];
-                    const paperDate = conference['Paper Submission Date'];
-
-                    row.innerHTML = `
-                        <td>${conference['Conference / Symposia Name']}</td>
-                        <td><a href="${conference['Website']}">${conference['Website']}</a></td>
-                        <td>${conference['Location']}</td>
-                        <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
-                        <td class="abstract-countdown"></td>
-                        <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
-                        <td class="paper-countdown"></td>
-                    `;
-                    tbody.appendChild(row);
-                });
-
-                updateCountdown(); // Apply countdown logic to the newly added rows
-            };
-
-            reader.readAsArrayBuffer(file);
-        });
     </script>
 </body>
 </html>
