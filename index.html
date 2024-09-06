@@ -58,6 +58,9 @@
                 <th>Countdown to Abstract Submission</th>
                 <th>Paper Submission Date</th>
                 <th>Countdown to Paper Submission</th>
+                <th>Conference Date</th>
+                <th>Countdown to Conference Date</th>
+                <th>Research Area(s)</th>
             </tr>
         </thead>
         <tbody>
@@ -84,6 +87,7 @@
 
                     const abstractDate = conference['Abstract Submission Date'];
                     const paperDate = conference['Paper Submission Date'];
+                    const conferenceDate = conference['Conference Date'];
 
                     row.innerHTML = `
                         <td>${conference['Conference / Symposia Name']}</td>
@@ -93,6 +97,9 @@
                         <td class="abstract-countdown"></td>
                         <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
                         <td class="paper-countdown"></td>
+                        <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
+                        <td class="conference-countdown"></td>
+                        <td>${conference['Research Area(s)']}</td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -106,15 +113,19 @@
             rows.forEach(row => {
                 const abstractDateElem = row.querySelector('.abstract-date');
                 const paperDateElem = row.querySelector('.paper-date');
+                const conferenceDateElem = row.querySelector('.conference-date');
                 const abstractCountdownElem = row.querySelector('.abstract-countdown');
                 const paperCountdownElem = row.querySelector('.paper-countdown');
+                const conferenceCountdownElem = row.querySelector('.conference-countdown');
                 
                 const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
                 const paperDate = new Date(paperDateElem.getAttribute('data-date'));
+                const conferenceDate = new Date(conferenceDateElem.getAttribute('data-date'));
                 const now = new Date();
 
                 const abstractDaysLeft = Math.ceil((abstractDate - now) / (1000 * 60 * 60 * 24));
                 const paperDaysLeft = Math.ceil((paperDate - now) / (1000 * 60 * 60 * 24));
+                const conferenceDaysLeft = Math.ceil((conferenceDate - now) / (1000 * 60 * 60 * 24));
 
                 if (abstractDaysLeft > 0) {
                     abstractCountdownElem.innerHTML = `<span class="countdown">${abstractDaysLeft} days left</span>`;
@@ -130,7 +141,14 @@
                     paperCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
                 }
 
-                if (abstractDaysLeft <= 0 && paperDaysLeft <= 0) {
+                if (conferenceDaysLeft > 0) {
+                    conferenceCountdownElem.innerHTML = `<span class="countdown">${conferenceDaysLeft} days left</span>`;
+                } else {
+                    conferenceDateElem.classList.add('expired');
+                    conferenceCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
+                }
+
+                if (abstractDaysLeft <= 0 && paperDaysLeft <= 0 && conferenceDaysLeft <= 0) {
                     row.classList.add('expired-row');
                 }
             });
