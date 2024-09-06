@@ -70,13 +70,20 @@
 
     <script>
         // Fetch the Excel file from the repository
-        fetch('conferences_information.xlsx')
-            .then(response => response.arrayBuffer())
+        fetch('./conferences_information.xlsx')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error fetching the Excel file: ' + response.statusText);
+                }
+                return response.arrayBuffer();
+            })
             .then(data => {
                 const workbook = XLSX.read(data, { type: 'array' });
                 const sheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[sheetName];
                 const json = XLSX.utils.sheet_to_json(worksheet);
+
+                console.log(json);  // Check if the JSON is correct
 
                 const tbody = document.querySelector('#conferenceTable tbody');
                 tbody.innerHTML = ''; // Clear the table body before appending
