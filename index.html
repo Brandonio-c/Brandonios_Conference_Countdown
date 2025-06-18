@@ -75,25 +75,64 @@
 
     <div id="error-message"></div> <!-- This is where error messages will appear -->
     
-    <table id="conferenceTable">
+    <h2>1. Submission Open Conferences</h2>
+        <table id="openTable">
         <thead>
             <tr>
-                <th>Conference / Symposia Name</th>
-                <th>Website</th>
-                <th>Location</th>
-                <th>Abstract Submission Date</th>
-                <th>Countdown to Abstract Submission</th>
-                <th>Paper Submission Date</th>
-                <th>Countdown to Paper Submission</th>
-                <th>Conference Date</th>
-                <th>Countdown to Conference Date</th>
-                <th>Research Area(s)</th>
-                <th>Ranking</th>
+            <th>Conference / Symposia Name</th>
+            <th>Website</th>
+            <th>Location</th>
+            <th>Abstract Submission Date</th>
+            <th>Countdown to Abstract Submission</th>
+            <th>Paper Submission Date</th>
+            <th>Countdown to Paper Submission</th>
+            <th>Conference Date</th>
+            <th>Countdown to Conference Date</th>
+            <th>Research Area(s)</th>
+            <th>Conference Ranking</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Rows will be added dynamically here -->
-        </tbody>
+        <tbody></tbody>
+    </table>
+
+    <h2>2. Upcoming Conferences (Submission Closed)</h2>
+        <table id="upcomingTable">
+        <thead>
+            <tr>
+            <th>Conference / Symposia Name</th>
+            <th>Website</th>
+            <th>Location</th>
+            <th>Abstract Submission Date</th>
+            <th>Countdown to Abstract Submission</th>
+            <th>Paper Submission Date</th>
+            <th>Countdown to Paper Submission</th>
+            <th>Conference Date</th>
+            <th>Countdown to Conference Date</th>
+            <th>Research Area(s)</th>
+            <th>Conference Ranking</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+        <h2>3. Past Conferences</h2>
+        <table id="pastTable">
+        <thead>
+            <tr>
+            <th>Conference / Symposia Name</th>
+            <th>Website</th>
+            <th>Location</th>
+            <th>Abstract Submission Date</th>
+            <th>Countdown to Abstract Submission</th>
+            <th>Paper Submission Date</th>
+            <th>Countdown to Paper Submission</th>
+            <th>Conference Date</th>
+            <th>Countdown to Conference Date</th>
+            <th>Research Area(s)</th>
+            <th>Conference Ranking</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
     </table>
 
     <!-- Toggle button to show/hide the research acronyms list -->
@@ -107,143 +146,134 @@
     </div>
 
     <script>
-        const errorMessageDiv = document.getElementById('error-message');
+/* ---------- helpers ---------- */
+const errBox = document.getElementById('error-message');
+function displayError(msg) {
+    errBox.textContent = msg;
+    errBox.style.display = 'block';
+    }
 
-        function displayError(message) {
-            errorMessageDiv.textContent = message;
-            errorMessageDiv.style.display = 'block'; // Show the error message on the page
-        }
-
-        // Fetch the Excel file from the repository
-        fetch('./conferences_information.xlsx')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error fetching the Excel file: ' + response.statusText);
-                }
-                return response.arrayBuffer();
-            })
-            .then(data => {
-                try {
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const sheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[sheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-
-                    if (!json || json.length === 0) {
-                        throw new Error('Excel file is empty or incorrectly formatted.');
-                    }
-
-                    const tbody = document.querySelector('#conferenceTable tbody');
-                    tbody.innerHTML = ''; // Clear the table body before appending
-
-                    // Loop through the data and create rows
-                    json.forEach(conference => {
-                        const row = document.createElement('tr');
-
-                        const abstractDate = conference['Abstract Submission Date'];
-                        const paperDate = conference['Paper Submission Date'];
-                        const conferenceDate = conference['Conference Date'];
-
-                        row.innerHTML = `
-                            <td>${conference['Conference / Symposia Name']}</td>
-                            <td><a href="${conference['Website']}">${conference['Website']}</a></td>
-                            <td>${conference['Location']}</td>
-                            <td class="abstract-date" data-date="${new Date(abstractDate).toISOString().split('T')[0]}">${abstractDate}</td>
-                            <td class="abstract-countdown"></td>
-                            <td class="paper-date" data-date="${new Date(paperDate).toISOString().split('T')[0]}">${paperDate}</td>
-                            <td class="paper-countdown"></td>
-                            <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
-                            <td class="conference-countdown"></td>
-                            <td>${conference['Research Area(s)']}</td>
-                            <td>${conference['Conference Rating'] || ''}</td>
-                        `;
-                        tbody.appendChild(row);
-                    });
-
-                    updateCountdown(); // Apply countdown logic to the newly added rows
-                } catch (error) {
-                    displayError('Error parsing the Excel file: ' + error.message);
-                }
-            })
-            .catch(error => displayError(error.message));
-
-        function updateCountdown() {
-            const rows = document.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                const abstractDateElem = row.querySelector('.abstract-date');
-                const paperDateElem = row.querySelector('.paper-date');
-                const conferenceDateElem = row.querySelector('.conference-date');
-                const abstractCountdownElem = row.querySelector('.abstract-countdown');
-                const paperCountdownElem = row.querySelector('.paper-countdown');
-                const conferenceCountdownElem = row.querySelector('.conference-countdown');
-                
-                const abstractDate = new Date(abstractDateElem.getAttribute('data-date'));
-                const paperDate = new Date(paperDateElem.getAttribute('data-date'));
-                const conferenceDate = new Date(conferenceDateElem.getAttribute('data-date'));
-                const now = new Date();
-
-                const abstractDaysLeft = Math.ceil((abstractDate - now) / (1000 * 60 * 60 * 24));
-                const paperDaysLeft = Math.ceil((paperDate - now) / (1000 * 60 * 60 * 24));
-                const conferenceDaysLeft = Math.ceil((conferenceDate - now) / (1000 * 60 * 60 * 24));
-
-                if (abstractDaysLeft > 0) {
-                    abstractCountdownElem.innerHTML = `<span class="countdown">${abstractDaysLeft} days left</span>`;
-                } else {
-                    abstractDateElem.classList.add('expired');
-                    abstractCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
-                }
-
-                if (paperDaysLeft > 0) {
-                    paperCountdownElem.innerHTML = `<span class="countdown">${paperDaysLeft} days left</span>`;
-                } else {
-                    paperDateElem.classList.add('expired');
-                    paperCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
-                }
-
-                if (conferenceDaysLeft > 0) {
-                    conferenceCountdownElem.innerHTML = `<span class="countdown">${conferenceDaysLeft} days left</span>`;
-                } else {
-                    conferenceDateElem.classList.add('expired');
-                    conferenceCountdownElem.innerHTML = '<span class="countdown expired">Expired</span>';
-                }
-
-                if (abstractDaysLeft <= 0 && paperDaysLeft <= 0 && conferenceDaysLeft <= 0) {
-                    row.classList.add('expired-row');
-                }
-            });
-        }
-
-        // Toggle research area acronyms list
-        document.getElementById('researchAcronymsToggle').addEventListener('click', function() {
-            const researchAcronymsList = document.getElementById('researchAcronymsList');
-            const isVisible = researchAcronymsList.style.display === 'block';
-            researchAcronymsList.style.display = isVisible ? 'none' : 'block';
-            this.textContent = isVisible ? 'Show Research Area Acronyms' : 'Hide Research Area Acronyms';
+    /* ---------- load main Excel ---------- */
+    fetch('./conferences_information.xlsx')
+    .then(r => {
+        if (!r.ok) throw new Error('Error fetching Excel: ' + r.statusText);
+        return r.arrayBuffer();
+    })
+    .then(buf => {
+        /* read workbook */
+        const wb  = XLSX.read(buf, { type: 'array', cellDates: true });
+        const ws  = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {
+        raw: false,
+        dateNF: 'yyyy-mm-dd'
         });
 
-        // Fetch and display the research acronyms from the Excel file
-        fetch('./research_acronyms.xlsx')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Error fetching the research acronyms Excel file: ' + response.statusText);
-                }
-                return response.arrayBuffer();
-            })
-            .then(data => {
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet);
+        if (!rows.length) throw new Error('Excel file is empty.');
 
-                const ul = document.getElementById('acronymsList');
-                json.forEach(entry => {
-                    const li = document.createElement('li');
-                    li.textContent = `${entry.Acronym}: ${entry['Research Area']}`;
-                    ul.appendChild(li);
-                });
-            })
-            .catch(error => displayError('Error fetching or parsing research acronyms: ' + error.message));
+        /* grab & clear target TBODYs */
+        const openTB     = document.querySelector('#openTable tbody');
+        const upcomingTB = document.querySelector('#upcomingTable tbody');
+        const pastTB     = document.querySelector('#pastTable tbody');
+        openTB.innerHTML = upcomingTB.innerHTML = pastTB.innerHTML = '';
 
-    </script>
+        /* ---------- build, sort, and render rows ---------- */
+        const openRows     = [];
+        const upcomingRows = [];
+        const pastRows     = [];
+
+        const today = new Date();
+
+        rows.forEach(rec => {
+            const paperLeft = new Date(rec['Paper Submission Date']) - today;
+            const confLeft  = new Date(rec['Conference Date'])    - today;
+
+            if (paperLeft >= 0)         openRows.push(rec);        // still accepting papers
+            else if (confLeft >= 0)     upcomingRows.push(rec);    // submission closed, conf upcoming
+            else                        pastRows.push(rec);        // conf already happened
+        });
+
+        /* sort the two live lists */
+        openRows.sort(     (a, b) => new Date(a['Abstract Submission Date']) - new Date(b['Abstract Submission Date']));
+        upcomingRows.sort( (a, b) => new Date(a['Conference Date'])          - new Date(b['Conference Date']));
+
+        /* helper to build a <tr> DOM node from a record */
+        function makeRow(c) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${c['Conference / Symposia Name']}</td>
+                <td><a href="${c['Website']}">${c['Website']}</a></td>
+                <td>${c['Location']}</td>
+                <td class="abstract-date"  data-date="${new Date(c['Abstract Submission Date']).toISOString().split('T')[0]}">${c['Abstract Submission Date']}</td>
+                <td class="abstract-countdown"></td>
+                <td class="paper-date"     data-date="${new Date(c['Paper Submission Date']).toISOString().split('T')[0]}">${c['Paper Submission Date']}</td>
+                <td class="paper-countdown"></td>
+                <td class="conference-date"data-date="${new Date(c['Conference Date']).toISOString().split('T')[0]}">${c['Conference Date']}</td>
+                <td class="conference-countdown"></td>
+                <td>${c['Research Area(s)']}</td>
+                <td>${c['Conference Ranking'] || ''}</td>
+            `;
+            return tr;
+        }
+
+        /* render to the three tables in sorted order */
+        openRows.forEach(     rec => openTB.appendChild(    makeRow(rec)) );
+        upcomingRows.forEach( rec => upcomingTB.appendChild(makeRow(rec)) );
+        pastRows.forEach(     rec => pastTB.appendChild(    makeRow(rec)) );
+
+        /* finally run countdowns */
+        updateCountdown();
+    })
+    .catch(e => displayError(e.message));
+
+    /* ---------- countdown logic (unchanged) ---------- */
+    function updateCountdown() {
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const ad = new Date(row.querySelector('.abstract-date').dataset.date);
+        const pd = new Date(row.querySelector('.paper-date').dataset.date);
+        const cd = new Date(row.querySelector('.conference-date').dataset.date);
+        const now = new Date();
+
+        const aLeft = Math.ceil((ad - now)/864e5);
+        const pLeft = Math.ceil((pd - now)/864e5);
+        const cLeft = Math.ceil((cd - now)/864e5);
+
+        row.querySelector('.abstract-countdown').innerHTML =
+        aLeft > 0 ? `<span class="countdown">${aLeft} days left</span>`
+                    : `<span class="countdown expired">Expired</span>`;
+        row.querySelector('.paper-countdown').innerHTML =
+        pLeft > 0 ? `<span class="countdown">${pLeft} days left</span>`
+                    : `<span class="countdown expired">Expired</span>`;
+        row.querySelector('.conference-countdown').innerHTML =
+        cLeft > 0 ? `<span class="countdown">${cLeft} days left</span>`
+                    : `<span class="countdown expired">Expired</span>`;
+
+        if (aLeft <= 0 && pLeft <= 0 && cLeft <= 0) row.classList.add('expired-row');
+    });
+    }
+
+    /* ---------- acronym toggle & load (unchanged) ---------- */
+    document.getElementById('researchAcronymsToggle').addEventListener('click', () => {
+    const list = document.getElementById('researchAcronymsList');
+    const open = list.style.display === 'block';
+    list.style.display = open ? 'none' : 'block';
+    event.target.textContent = open ? 'Show Research Area Acronyms' : 'Hide Research Area Acronyms';
+    });
+
+    fetch('./research_acronyms.xlsx')
+    .then(r => r.arrayBuffer())
+    .then(buf => {
+        const wb = XLSX.read(buf, { type: 'array', cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const acr = XLSX.utils.sheet_to_json(ws, { raw:false });
+        const ul  = document.getElementById('acronymsList');
+        acr.forEach(x => {
+        const li = document.createElement('li');
+        li.textContent = `${x.Acronym}: ${x['Research Area']}`;
+        ul.appendChild(li);
+        });
+    })
+    .catch(e => displayError('Acronym load error: ' + e.message));
+</script>
+
 </body>
 </html>
