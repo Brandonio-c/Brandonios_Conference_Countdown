@@ -88,6 +88,7 @@
                 <th>Conference Date</th>
                 <th>Countdown to Conference Date</th>
                 <th>Research Area(s)</th>
+                <th>Ranking</th>
             </tr>
         </thead>
         <tbody>
@@ -154,6 +155,7 @@
                             <td class="conference-date" data-date="${new Date(conferenceDate).toISOString().split('T')[0]}">${conferenceDate}</td>
                             <td class="conference-countdown"></td>
                             <td>${conference['Research Area(s)']}</td>
+                            <td>${conference['Conference Rating'] || ''}</td>
                         `;
                         tbody.appendChild(row);
                     });
