@@ -95,6 +95,26 @@
         <tbody></tbody>
     </table>
 
+    <h2>1a. Conferences with TBD Dates</h2>
+    <table id="tbdTable">
+    <thead>
+        <tr>
+        <th>Conference / Symposia Name</th>
+        <th>Website</th>
+        <th>Location</th>
+        <th>Abstract Submission Date</th>
+        <th>Countdown to Abstract</th>
+        <th>Paper Submission Date</th>
+        <th>Countdown to Paper</th>
+        <th>Conference Date</th>
+        <th>Countdown to Conference</th>
+        <th>Research Area(s)</th>
+        <th>Conference Ranking</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+    </table>
+
     <h2>2. Upcoming Conferences (Submission Closed)</h2>
         <table id="upcomingTable">
         <thead>
@@ -172,24 +192,34 @@ function displayError(msg) {
 
         /* grab & clear target TBODYs */
         const openTB     = document.querySelector('#openTable tbody');
+        const tbdTB      = document.querySelector('#tbdTable  tbody');  
         const upcomingTB = document.querySelector('#upcomingTable tbody');
         const pastTB     = document.querySelector('#pastTable tbody');
-        openTB.innerHTML = upcomingTB.innerHTML = pastTB.innerHTML = '';
+        openTB.innerHTML = tbdTB.innerHTML = upcomingTB.innerHTML = pastTB.innerHTML = '';
 
         /* ---------- build, sort, and render rows ---------- */
         const openRows     = [];
         const upcomingRows = [];
         const pastRows     = [];
+        const tbdRows     = []; 
 
         const today = new Date();
 
         rows.forEach(rec => {
+            // normalise “TBD” checks once
+            const isTBD = v => (typeof v === 'string') && v.trim().toUpperCase() === 'TBD';
+
+            if (isTBD(rec['Conference Date'])) {                 // ✱ NEW
+                tbdRows.push(rec);                                 // ✱ NEW
+                return;                                            // ✱ NEW
+            }
+
             const paperLeft = new Date(rec['Paper Submission Date']) - today;
             const confLeft  = new Date(rec['Conference Date'])    - today;
 
-            if (paperLeft >= 0)         openRows.push(rec);        // still accepting papers
-            else if (confLeft >= 0)     upcomingRows.push(rec);    // submission closed, conf upcoming
-            else                        pastRows.push(rec);        // conf already happened
+            if (paperLeft >= 0)         openRows.push(rec);
+            else if (confLeft >= 0)     upcomingRows.push(rec);
+            else                        pastRows.push(rec);
         });
 
         /* sort the two live lists */
@@ -198,58 +228,81 @@ function displayError(msg) {
 
         /* helper to build a <tr> DOM node from a record */
         function makeRow(c) {
+            const asText = v => (v && v.toString().trim().toUpperCase() === 'TBD') ? 'TBD' : v;
+            const asAttr = v => (v && v.toString().trim().toUpperCase() === 'TBD')
+                                ? ''
+                                : `data-date="${new Date(v).toISOString().split('T')[0]}"`;
+
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${c['Conference / Symposia Name']}</td>
                 <td><a href="${c['Website']}">${c['Website']}</a></td>
                 <td>${c['Location']}</td>
-                <td class="abstract-date"  data-date="${new Date(c['Abstract Submission Date']).toISOString().split('T')[0]}">${c['Abstract Submission Date']}</td>
+
+                <td class="abstract-date"  ${asAttr(c['Abstract Submission Date'])}>${asText(c['Abstract Submission Date'])}</td>
                 <td class="abstract-countdown"></td>
-                <td class="paper-date"     data-date="${new Date(c['Paper Submission Date']).toISOString().split('T')[0]}">${c['Paper Submission Date']}</td>
+
+                <td class="paper-date"     ${asAttr(c['Paper Submission Date'])}>${asText(c['Paper Submission Date'])}</td>
                 <td class="paper-countdown"></td>
-                <td class="conference-date"data-date="${new Date(c['Conference Date']).toISOString().split('T')[0]}">${c['Conference Date']}</td>
+
+                <td class="conference-date"${asAttr(c['Conference Date'])}>${asText(c['Conference Date'])}</td>
                 <td class="conference-countdown"></td>
+
                 <td>${c['Research Area(s)']}</td>
                 <td>${c['Conference Ranking'] || ''}</td>
             `;
             return tr;
         }
 
+
         /* render to the three tables in sorted order */
         openRows.forEach(     rec => openTB.appendChild(    makeRow(rec)) );
         upcomingRows.forEach( rec => upcomingTB.appendChild(makeRow(rec)) );
         pastRows.forEach(     rec => pastTB.appendChild(    makeRow(rec)) );
+        tbdRows.forEach( rec => tbdTB.appendChild( makeRow(rec)) );
 
         /* finally run countdowns */
         updateCountdown();
     })
     .catch(e => displayError(e.message));
 
-    /* ---------- countdown logic (unchanged) ---------- */
+    /* ---------- countdown logic (updated) ---------- */
     function updateCountdown() {
-    document.querySelectorAll('tbody tr').forEach(row => {
-        const ad = new Date(row.querySelector('.abstract-date').dataset.date);
-        const pd = new Date(row.querySelector('.paper-date').dataset.date);
-        const cd = new Date(row.querySelector('.conference-date').dataset.date);
-        const now = new Date();
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const now = new Date();
 
-        const aLeft = Math.ceil((ad - now)/864e5);
-        const pLeft = Math.ceil((pd - now)/864e5);
-        const cLeft = Math.ceil((cd - now)/864e5);
+            // helper: return days left, or null if the cell has no date (i.e. "TBD")
+            const getLeft = cls => {
+            const iso = row.querySelector(cls).dataset.date;
+            return iso ? Math.ceil((new Date(iso) - now) / 864e5) : null;
+            };
 
-        row.querySelector('.abstract-countdown').innerHTML =
-        aLeft > 0 ? `<span class="countdown">${aLeft} days left</span>`
-                    : `<span class="countdown expired">Expired</span>`;
-        row.querySelector('.paper-countdown').innerHTML =
-        pLeft > 0 ? `<span class="countdown">${pLeft} days left</span>`
-                    : `<span class="countdown expired">Expired</span>`;
-        row.querySelector('.conference-countdown').innerHTML =
-        cLeft > 0 ? `<span class="countdown">${cLeft} days left</span>`
-                    : `<span class="countdown expired">Expired</span>`;
+            const aLeft = getLeft('.abstract-date');
+            const pLeft = getLeft('.paper-date');
+            const cLeft = getLeft('.conference-date');
 
-        if (aLeft <= 0 && pLeft <= 0 && cLeft <= 0) row.classList.add('expired-row');
-    });
+            // helper: build countdown cell text
+            const render = left =>
+            left === null
+                ? 'TBD'
+                : left > 0
+                ? `<span class="countdown">${left} days left</span>`
+                : `<span class="countdown expired">Expired</span>`;
+
+            row.querySelector('.abstract-countdown').innerHTML   = render(aLeft);
+            row.querySelector('.paper-countdown').innerHTML      = render(pLeft);
+            row.querySelector('.conference-countdown').innerHTML = render(cLeft);
+
+            // flag rows fully in the past (ignore rows with any TBD)
+            if (
+            aLeft !== null && pLeft !== null && cLeft !== null &&
+            aLeft <= 0 && pLeft <= 0 && cLeft <= 0
+            ) {
+            row.classList.add('expired-row');
+            }
+        });
     }
+
 
     /* ---------- acronym toggle & load (unchanged) ---------- */
     document.getElementById('researchAcronymsToggle').addEventListener('click', () => {
